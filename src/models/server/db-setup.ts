@@ -1,6 +1,9 @@
 import { databases } from "./config";
 import { CONST } from "../constants";
 import createQuestionCollection from "./question.collection";
+import createAnswerCollection from "./answer.collection";
+import createCommentCollection from "./comment.collection";
+import createVoteCollection from "./vote.collection";
 
 export default async function getOrCreateDatabase() {
   try {
@@ -15,12 +18,15 @@ export default async function getOrCreateDatabase() {
       await databases.create(CONST.db, CONST.db);
       console.log(`Database ${CONST.db} created successfully.`);
       // Create the question collection if the database was created
-      await Promise.all([createQuestionCollection()]);
+      await Promise.all([
+        createQuestionCollection(),
+        createAnswerCollection(),
+        createCommentCollection(),
+        createVoteCollection(),
+      ]);
 
       console.log(`All collections created successfully in ${CONST.db}.`);
-      console.log(
-        `You can now start using the database with the collections created.`
-      );
+
     } catch (error) {
       console.error(
         `Failed to create database ${CONST.db}: ${

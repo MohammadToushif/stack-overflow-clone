@@ -22,8 +22,13 @@ export default async function getOrCreateStorage() {
           Permission.create("users"),
           Permission.update("users"),
           Permission.delete("users"),
-        ]
+        ],
+        false,
+        undefined,
+        undefined,
+        ["jpg", "png", "gif", "jpeg", "webp", "heic"]
       );
+
       console.log(
         `Storage bucket ${CONST.questionAttachmentBucket} created successfully.`
       );

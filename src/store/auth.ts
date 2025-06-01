@@ -9,21 +9,16 @@ export interface UserPrefs {
   reputation: number;
 }
 
+// Step 1: Define the interface
 interface IAuthStore {
   session: Models.Session | null;
   jwt: string | null;
   user: Models.User<UserPrefs> | null;
   hydrated: boolean;
+  error: AppwriteException | null;
 
   setHydrated(): void;
-  verfiySession(): Promise<void>;
-  login(
-    email: string,
-    password: string
-  ): Promise<{
-    success: boolean;
-    error?: AppwriteException | null;
-  }>;
+  verifySession(): Promise<void>;
   createAccount(
     name: string,
     email: string,
@@ -32,9 +27,18 @@ interface IAuthStore {
     success: boolean;
     error?: AppwriteException | null;
   }>;
+  login(
+    email: string,
+    password: string
+  ): Promise<{
+    success: boolean;
+    error?: AppwriteException | null;
+  }>;
   logout(): Promise<void>;
+  refreshSession(): Promise<void>;
 }
 
+// Step 2: Create the store using Zustand and persist middleware
 export const useAuthStore = create<IAuthStore>()(
   persist(
     immer((set) => ({
@@ -42,17 +46,27 @@ export const useAuthStore = create<IAuthStore>()(
       jwt: null,
       user: null,
       hydrated: false,
+      error: null,
 
       setHydrated() {
         set({ hydrated: true });
       },
 
-      async verfiySession() {
+      async verifySession() {
+        set({ error: null });
         try {
           const session = await account.getSession("current");
-          set({ session });
+          const [user, { jwt }] = await Promise.all([
+            account.get<UserPrefs>(),
+            account.createJWT(),
+          ]);
+          set({ session, user, jwt, error: null });
         } catch (error) {
-          console.log(error);
+          console.error("Session verification failed:", error);
+          set({ session: null, user: null, jwt: null });
+          if (error instanceof AppwriteException) {
+            set({ error });
+          }
         }
       },
 
@@ -104,12 +118,31 @@ export const useAuthStore = create<IAuthStore>()(
           console.log(error);
         }
       },
+
+      async refreshSession() {
+        try {
+          const session = await account.getSession("current");
+          const { jwt } = await account.createJWT();
+          set({ session, jwt });
+        } catch (error) {
+          console.log(error);
+        }
+      },
     })),
     {
       name: "auth",
+      partialize: (state) => ({
+        session: state.session,
+        jwt: state.jwt,
+        user: state.user,
+        hydrated: state.hydrated,
+      }),
       onRehydrateStorage() {
         return (state, error) => {
-          if (!error) state?.setHydrated();
+          if (error) {
+            console.error("Storage rehydration error:", error);
+          }
+          state?.setHydrated();
         };
       },
     }

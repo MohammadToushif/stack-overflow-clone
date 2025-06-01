@@ -1,5 +1,5 @@
 import { Client, Account, Databases, Avatars, Storage } from "appwrite";
-import { env } from "@/env";
+import { env } from "@/env-config";
 
 const client = new Client();
 
@@ -10,5 +10,4 @@ const account = new Account(client);
 const avatars = new Avatars(client);
 const storage = new Storage(client);
 
-// export { ID } from "appwrite";
 export { databases, account, avatars, storage };

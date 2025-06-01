@@ -10,6 +10,7 @@ export default async function createQuestionCollection() {
     CONST.questionCollection,
     [
       Permission.read("any"),
+      Permission.read("users"),
       Permission.create("users"),
       Permission.update("users"),
       Permission.delete("users"),
@@ -73,13 +74,9 @@ export default async function createQuestionCollection() {
       ["title"],
       ["asc"]
     ),
-    databases.createIndex(
-      CONST.db,
-      CONST.questionCollection,
-      "content",
-      IndexType.Fulltext,
-      ["content"],
-      ["asc"]
-    ),
   ]);
+
+  console.log(
+    `Indexes for collection ${CONST.questionCollection} created successfully`
+  );
 }
